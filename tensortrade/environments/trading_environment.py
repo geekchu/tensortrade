@@ -19,7 +19,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from gym.spaces import Discrete, Box
+from gym.spaces import Box
 from typing import Union, List, Tuple, Dict
 
 import tensortrade.actions as actions
@@ -79,7 +79,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
             self.feed.reset()
 
         self.history = ObservationHistory(window_size=window_size)
-        self._broker = Broker(exchanges=self.portfolio.exchanges)
+        self._broker = Broker()
 
         self.clock = Clock()
         self.action_space = None
@@ -220,7 +220,12 @@ class TradingEnvironment(gym.Env, TimeIndexed):
             done (bool): If `True`, the environments is complete and should be restarted.
             info (dict): Any auxiliary, diagnostic, or debugging information to output.
         """
-        order = self.action_scheme.get_order(action, self.portfolio)
+        try:
+            order = self.action_scheme.get_order(action, self.portfolio)
+        except Exception as e:
+            order = None
+
+            print('Invalid order created: ', e)
 
         if order:
             self._broker.submit(order)
@@ -303,7 +308,8 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         current_step = self.clock.step - 1
 
         for renderer in self._renderers:
-            price_history = None if self._price_history is None else self._price_history[self._price_history.index < current_step]
+            price_history = None if self._price_history is None else self._price_history[
+                self._price_history.index < current_step]
             renderer.render(episode=episode,
                             max_episodes=self._max_episodes,
                             step=current_step,
