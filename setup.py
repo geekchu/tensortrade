@@ -36,9 +36,9 @@ setup(
     description='TensorTrade: a reinforcement learning library for training, evaluating, and deploying robust trading agents.',
     long_description='TensorTrade: a reinforcement learning library for training, evaluating, and deploying robust trading agents.',
     long_description_content_type='text/markdown',
-    author='Adam King',
-    author_email='adamjking3@gmail.com',
-    url='https://github.com/tensortrade-org/tensortrade',
+    author='geekchu',
+    author_email='geekchu@qq.com',
+    url='https://github.com/geekchu/tensortrade',
     packages=[
         package for package in find_packages(exclude=('tests', 'docs'))
         if package.startswith('tensortrade')
