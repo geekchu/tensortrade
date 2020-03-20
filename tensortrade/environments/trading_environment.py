@@ -240,8 +240,8 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         obs_keys = obs_row.keys()
         obs_keys_internal = set(obs_keys) - set(self._external_keys)
 
-        obs_row = {k: obs_row[k] for k in self._external_keys}
         obs_row_internal = {k: obs_row[k] for k in obs_keys_internal}
+        obs_row = {k: obs_row[k] for k in self._external_keys}
 
         obs_row = self.scaler.transform(obs_row)
         self.history.push(obs_row, obs_row_internal)
@@ -298,8 +298,8 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         obs_keys = obs_row.keys()
         obs_keys_internal = set(obs_keys) - set(self._external_keys)
 
-        obs_row = {k: obs_row[k] for k in self._external_keys}
         obs_row_internal = {k: obs_row[k] for k in obs_keys_internal}
+        obs_row = {k: obs_row[k] for k in self._external_keys}
         obs_row = self.scaler.transform(obs_row)
         self.history.push(obs_row, obs_row_internal)
 
