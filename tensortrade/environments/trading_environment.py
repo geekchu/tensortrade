@@ -50,7 +50,6 @@ class TradingEnvironment(gym.Env, TimeIndexed):
                  feed: DataFeed = None,
                  window_size: int = 1,
                  renderers: Union[str, List[str], List['BaseRenderer']] = 'screenlog',
-                 scaler: 'Scaler' = None,
                  **kwargs):
         """
         Arguments:
@@ -94,8 +93,6 @@ class TradingEnvironment(gym.Env, TimeIndexed):
             if isinstance(renderer, str):
                 renderer = get(renderer)
             self._renderers.append(renderer)
-
-        self.scaler = scaler
 
         self._enable_logger = kwargs.get('enable_logger', False)
         self._observation_dtype = kwargs.get('dtype', np.float32)
@@ -243,7 +240,6 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         obs_row_internal = {k: obs_row[k] for k in obs_keys_internal}
         obs_row = {k: obs_row[k] for k in self._external_keys}
 
-        obs_row = self.scaler.transform(obs_row)
         self.history.push(obs_row, obs_row_internal)
 
         obs, obs_internal = self.history.observe()
@@ -300,7 +296,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
 
         obs_row_internal = {k: obs_row[k] for k in obs_keys_internal}
         obs_row = {k: obs_row[k] for k in self._external_keys}
-        obs_row = self.scaler.transform(obs_row)
+
         self.history.push(obs_row, obs_row_internal)
 
         obs, obs_internal = self.history.observe()
