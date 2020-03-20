@@ -49,8 +49,8 @@ class TradingEnvironment(gym.Env, TimeIndexed):
                  reward_scheme: Union[RewardScheme, str],
                  feed: DataFeed = None,
                  window_size: int = 1,
-                 use_internal: bool = True,
                  renderers: Union[str, List[str], List['BaseRenderer']] = 'screenlog',
+                 scaler: 'Scaler' = None,
                  **kwargs):
         """
         Arguments:
@@ -71,7 +71,6 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         self.reward_scheme = reward_scheme
         self.feed = feed
         self.window_size = window_size
-        self.use_internal = use_internal
         self._price_history: pd.DataFrame = kwargs.get('price_history', None)
 
         if self.feed:
@@ -95,6 +94,8 @@ class TradingEnvironment(gym.Env, TimeIndexed):
             if isinstance(renderer, str):
                 renderer = get(renderer)
             self._renderers.append(renderer)
+
+        self.scaler = scaler
 
         self._enable_logger = kwargs.get('enable_logger', False)
         self._observation_dtype = kwargs.get('dtype', np.float32)
@@ -150,7 +151,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
             self.feed = self.feed + create_internal_feed(self.portfolio)
 
         initial_obs = self.feed.next()
-        n_features = len(initial_obs.keys()) if self.use_internal else len(self._external_keys)
+        n_features = len(self._external_keys)
 
         self.observation_space = Box(
             low=self._observation_lows,
@@ -236,14 +237,18 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         self._broker.update()
 
         obs_row = self.feed.next()
+        obs_keys = obs_row.keys()
+        obs_keys_internal = set(obs_keys) - set(self._external_keys)
 
-        if not self.use_internal:
-            obs_row = {k: obs_row[k] for k in self._external_keys}
+        obs_row = {k: obs_row[k] for k in self._external_keys}
+        obs_row_internal = {k: obs_row[k] for k in obs_keys_internal}
 
-        self.history.push(obs_row)
+        obs_row = self.scaler.transform(obs_row)
+        self.history.push(obs_row, obs_row_internal)
 
-        obs = self.history.observe()
+        obs, obs_internal = self.history.observe()
         obs = obs.astype(self._observation_dtype)
+        obs_internal = obs_internal.astype(self._observation_dtype)
 
         reward = self.reward_scheme.get_reward(self._portfolio)
         reward = np.nan_to_num(reward)
@@ -269,7 +274,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
 
         self.clock.increment()
 
-        return obs, reward, done, info
+        return obs, obs_internal, reward, done, info
 
     def reset(self) -> np.array:
         """Resets the state of the environments and returns an initial observation.
@@ -290,17 +295,21 @@ class TradingEnvironment(gym.Env, TimeIndexed):
             renderer.reset()
 
         obs_row = self.feed.next()
+        obs_keys = obs_row.keys()
+        obs_keys_internal = set(obs_keys) - set(self._external_keys)
 
-        if not self.use_internal:
-            obs_row = {k: obs_row[k] for k in self._external_keys}
+        obs_row = {k: obs_row[k] for k in self._external_keys}
+        obs_row_internal = {k: obs_row[k] for k in obs_keys_internal}
+        obs_row = self.scaler.transform(obs_row)
+        self.history.push(obs_row, obs_row_internal)
 
-        self.history.push(obs_row)
-
-        obs = self.history.observe()
+        obs, obs_internal = self.history.observe()
+        obs = obs.astype(self._observation_dtype)
+        obs_internal = obs_internal.astype(self._observation_dtype)
 
         self.clock.increment()
 
-        return obs
+        return obs, obs_internal
 
     def render(self, episode: int = None):
         """Renders the environment.

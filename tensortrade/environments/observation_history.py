@@ -23,15 +23,16 @@ class ObservationHistory(object):
     def __init__(self, window_size: int):
         self.window_size = window_size
         self.rows = pd.DataFrame()
+        self.internal = {}
 
-    def push(self, row: dict):
+    def push(self, row: dict, internal: dict):
         """Saves an observation."""
         self.rows = self.rows.append(row, ignore_index=True)
-
+        self.internal = internal
         if len(self.rows) > self.window_size:
-            self.rows = self.rows[-self.window_size:]
+            self.rows = self.rows[-self.window_size :]
 
-    def observe(self) -> np.array:
+    def observe(self):
         """Returns the rows to be observed by the agent."""
         rows = self.rows.copy()
 
@@ -46,8 +47,10 @@ class ObservationHistory(object):
             rows = rows.values
 
         rows = np.nan_to_num(rows)
+        internal = np.array(list(self.internal.values()))
 
-        return rows
+        return rows, internal
 
     def reset(self):
         self.rows = pd.DataFrame()
+        self.internal = {}
