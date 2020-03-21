@@ -236,8 +236,13 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         obs_row = self.feed.next()
         obs_keys = obs_row.keys()
         obs_keys_internal = set(obs_keys) - set(self._external_keys)
+        obs_keys_internal_used = []
+        for k in obs_keys_internal:
+            if 'total' in k or 'locked' in k or 'worth' in k:
+                obs_keys_internal_used.append(k)
+        obs_keys_internal_used.sort()
 
-        obs_row_internal = {k: obs_row[k] for k in obs_keys_internal}
+        obs_row_internal = {k: obs_row[k] for k in obs_keys_internal_used}
         obs_row = {k: obs_row[k] for k in self._external_keys}
 
         self.history.push(obs_row, obs_row_internal)
@@ -293,8 +298,13 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         obs_row = self.feed.next()
         obs_keys = obs_row.keys()
         obs_keys_internal = set(obs_keys) - set(self._external_keys)
+        obs_keys_internal_used = []
+        for k in obs_keys_internal:
+            if 'total' in k or 'locked' in k or 'worth' in k:
+                obs_keys_internal_used.append(k)
+        obs_keys_internal_used.sort()
 
-        obs_row_internal = {k: obs_row[k] for k in obs_keys_internal}
+        obs_row_internal = {k: obs_row[k] for k in obs_keys_internal_used}
         obs_row = {k: obs_row[k] for k in self._external_keys}
 
         self.history.push(obs_row, obs_row_internal)

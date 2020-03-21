@@ -36,12 +36,6 @@ class ObservationHistory(object):
         """Returns the rows to be observed by the agent."""
         rows = self.rows.copy()
 
-        if len(rows) < self.window_size:
-            size = self.window_size - len(rows)
-            padding = np.zeros((size, rows.shape[1]))
-            padding = pd.DataFrame(padding, columns=self.rows.columns)
-            rows = pd.concat([padding, rows], ignore_index=True, sort=False)
-
         if isinstance(rows, pd.DataFrame):
             rows = rows.fillna(0, axis=1)
             rows = rows.values
