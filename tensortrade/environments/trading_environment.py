@@ -233,23 +233,19 @@ class TradingEnvironment(gym.Env, TimeIndexed):
 
         self._broker.update()
 
-        obs_row = self.feed.next()
-        obs_keys = obs_row.keys()
+        obs_row_raw = self.feed.next()
+        obs_keys = obs_row_raw.keys()
         obs_keys_internal = set(obs_keys) - set(self._external_keys)
-        obs_keys_internal_used = []
+
+        obs_row = {k: obs_row_raw[k] for k in self._external_keys}
         for k in obs_keys_internal:
-            if 'total' in k or 'locked' in k or 'worth' in k:
-                obs_keys_internal_used.append(k)
-        obs_keys_internal_used.sort()
+            if 'worth' in k and k != 'net_worth':
+                obs_row[k] = obs_row_raw[k]/obs_row_raw['net_worth']
 
-        obs_row_internal = {k: obs_row[k] for k in obs_keys_internal_used}
-        obs_row = {k: obs_row[k] for k in self._external_keys}
+        self.history.push(obs_row)
 
-        self.history.push(obs_row, obs_row_internal)
-
-        obs, obs_internal = self.history.observe()
+        obs = self.history.observe()
         obs = obs.astype(self._observation_dtype)
-        obs_internal = obs_internal.astype(self._observation_dtype)
 
         reward = self.reward_scheme.get_reward(self._portfolio)
         reward = np.nan_to_num(reward)
@@ -257,7 +253,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         if np.bitwise_not(np.isfinite(reward)):
             raise ValueError('Reward returned by the reward scheme must by a finite float.')
 
-        done = (self.portfolio.profit_loss < self._max_allowed_loss) or not self.feed.has_next()
+        done = (self.portfolio.profit_loss < (1 - self._max_allowed_loss)) or not self.feed.has_next()
 
         info = {
             'step': self.clock.step,
@@ -275,7 +271,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
 
         self.clock.increment()
 
-        return obs, obs_internal, reward, done, info
+        return obs, reward, done, info
 
     def reset(self) -> np.array:
         """Resets the state of the environments and returns an initial observation.
@@ -295,27 +291,23 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         for renderer in self._renderers:
             renderer.reset()
 
-        obs_row = self.feed.next()
-        obs_keys = obs_row.keys()
+        obs_row_raw = self.feed.next()
+        obs_keys = obs_row_raw.keys()
         obs_keys_internal = set(obs_keys) - set(self._external_keys)
-        obs_keys_internal_used = []
+
+        obs_row = {k: obs_row_raw[k] for k in self._external_keys}
         for k in obs_keys_internal:
-            if 'total' in k or 'locked' in k or 'worth' in k:
-                obs_keys_internal_used.append(k)
-        obs_keys_internal_used.sort()
+            if 'worth' in k and k != 'net_worth':
+                obs_row[k] = obs_row_raw[k]/obs_row_raw['net_worth']
 
-        obs_row_internal = {k: obs_row[k] for k in obs_keys_internal_used}
-        obs_row = {k: obs_row[k] for k in self._external_keys}
+        self.history.push(obs_row)
 
-        self.history.push(obs_row, obs_row_internal)
-
-        obs, obs_internal = self.history.observe()
+        obs = self.history.observe()
         obs = obs.astype(self._observation_dtype)
-        obs_internal = obs_internal.astype(self._observation_dtype)
 
         self.clock.increment()
 
-        return obs, obs_internal
+        return obs
 
     def render(self, episode: int = None):
         """Renders the environment.
