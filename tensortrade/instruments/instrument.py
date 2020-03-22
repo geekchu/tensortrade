@@ -70,6 +70,7 @@ class Instrument:
 # Crypto
 BTC = Instrument('BTC', 8, 'Bitcoin')
 ETH = Instrument('ETH', 8, 'Ethereum')
+EOS = Instrument('EOS', 8, 'EOS')
 XRP = Instrument('XRP', 8, 'XRP')
 NEO = Instrument('NEO', 8, 'NEO')
 BCH = Instrument('BCH', 8, 'Bitcoin Cash')
@@ -79,6 +80,9 @@ XLM = Instrument('XLM', 8, 'Stellar Lumens')
 LINK = Instrument('LINK', 8, 'Chainlink')
 ATOM = Instrument('ATOM', 8, 'Cosmos')
 DAI = Instrument('DAI', 8, 'Dai')
+BNB = Instrument('BNB', 8, 'BNB')
+HT = Instrument('HT', 8, 'HT')
+OKB = Instrument('OKB', 8, 'OKB')
 USDT = Instrument('USDT', 8, 'Tether')
 
 # FX
